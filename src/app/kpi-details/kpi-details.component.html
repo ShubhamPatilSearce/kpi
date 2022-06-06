@@ -1,36 +1,50 @@
-<div class="container align-items-center border " style="padding-top:30px">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="row justify-content-center">
-                <div class="col" style="color:#A1A2A5">Sustainability > SHS</div>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col fs-2">CO2 Emission intensity</div>
-                <div class="col fs-2" style="color:#A1A2A5">Jamshedpur</div>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col text-danger fs-5">- 15.2 ( 0.025% )</div>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col"></div>
-                <div class="col fs-5" style="color:#A1A2A5">plan</div>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col fs-2">58,588.32 tCO2/tcs</div>
-                <div class="col">
-                    <div class="row">
-                        <div class="col fs-3" style="color:#A1A2A5">58,588.32 tCO2/tcs</div>
-                        <div class="col fs-3" style="color: #DBA59E;">0.025 %</div>
-                    </div>
-                </div>
-            </div>
-            <div class="row justify-content-center">
-                <div class="col">15 Dec, 2:54pm IST +hourly</div>
-            </div>
-        
-            <div>
-                <canvas id="myChart" width="717px" height="251px" #mychart></canvas>
-            </div>
-        </div>
-        </div>
+<div class="container" style="width: 730px; border: 2 px; border-color:#A1A2A5;">
+<div class="grid-container-1">
+    <div class="grid-item department"> Sustainability > SHS</div>
+    <div class="grid-item name">CO2 Emission intensity</div>
+    <div class="grid-item location">Jamshedpur</div>
+    <div class="grid-item actual">Actual:</div>
+    <div class="grid-item plan">Plan:</div>
+    <div *ngIf="this.area == 'MD';  else deviation" class="grid-item deviation ">Compliance:</div>
+    <ng-template #deviation><div class="grid-item deviation " >Deviation:</div></ng-template>
+    <div class="grid-item actual-value">{{this.precision()}} tCO2/tcs</div>
+    <div class="grid-item plan-value">58,588.32 tCO2/tcs</div>
+    <div *ngIf="this.area == 'MD';  else deviationvalue" class="grid-item deviation-value tooltip1"><span class="span-space1">-13.05%</span>
+        <span class="tooltiptext1">
+            <span class="span-space" style="--my-color-var: Red;">Red</span><br>
+            <span class="span-space" style="--my-color-var: Yellow;">Yellow</span><br>
+            <span class="span-space" style="--my-color-var: Green;">Green</span>
+        </span>
+    </div>
+    <ng-template #deviationvalue><div class="grid-item deviation-value" >23%</div></ng-template>
+    <div class="grid-item frequency">{{this.freqdate( this.frequencydate , this.frequency)}} +{{this.frequency}}</div>
+    <div class="grid-item chart-type">
+        <mat-button-toggle-group name="fontStyle" aria-label="Font Style">
+            <mat-button-toggle  (change)="bar()">Bar</mat-button-toggle>
+            <mat-button-toggle  (change)="line()">Line</mat-button-toggle>
+            <mat-button-toggle (change)="boxplot()" >Box Plot</mat-button-toggle>
+        </mat-button-toggle-group>
+    </div>
+</div>
+
+<div [hidden]="!(this.chart_type != 'boxplot')"  style=" width : 600px; height: auto">
+    <canvas id="myChart" #mychart></canvas>
+</div>
+
+<div [hidden]="(this.chart_type != 'boxplot')" class="grid-container-3"  >
+    <div style=" width : 295px; height: 250px;" class="grid-item bp1"> <canvas id="mychart2" #mychart2></canvas></div>
+    <div style=" width : 295px; height: 250px" [hidden]="!this.plannedValueExist()"class="grid-item bp2"> <canvas id="mychart3" #mychart3></canvas></div>
+</div>
+
+
+<div class="grid-container-2">
+    <div class="grid-item start-date"> Start Date : <input (change)="filterdata()" type="date" id="startdate" value=""
+            #startdate></div>
+    <div class="grid-item end-date"> End Date : <input (change)="filterdata()" type="date" id="enddate" value=""
+            #enddate></div>
+</div>
+<!-- 
+<div *ngIf="this.frequency == 'Monthly' " style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif"> <span style="color: red; ">*</span> 
+     Please select first day of the month for start date and end date</div> -->
+
 </div>

@@ -4,6 +4,14 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { KpiDetailsComponent } from './kpi-details/kpi-details.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {MatInputModule} from '@angular/material/input';
+import {MatButtonToggleModule} from '@angular/material/button-toggle';
+import { ChartModule } from 'angular2-chartjs';
+import { NgApexchartsModule } from 'ng-apexcharts';
+import { HashLocationStrategy, LocationStrategy } from '@angular/common';
+
+
 
 @NgModule({
   declarations: [
@@ -12,9 +20,14 @@ import { KpiDetailsComponent } from './kpi-details/kpi-details.component';
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    MatInputModule,
+    MatButtonToggleModule,
+    ChartModule,
+    NgApexchartsModule
   ],
-  providers: [],
+  providers: [{provide: LocationStrategy, useClass: HashLocationStrategy}],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
