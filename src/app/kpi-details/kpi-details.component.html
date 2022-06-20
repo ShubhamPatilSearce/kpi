@@ -38,9 +38,9 @@
 
 
 <div class="grid-container-2">
-    <div class="grid-item start-date"> Start Date : <input (change)="filterdata()" type="date" id="startdate" value=""
+    <div class="grid-item start-date"> Start Date : <input (change)="filterdata()" type="date" id="startdate" value="" [min]="mindate" [max]="maxdate"
             #startdate></div>
-    <div class="grid-item end-date"> End Date : <input (change)="filterdata()" type="date" id="enddate" value=""
+    <div class="grid-item end-date"> End Date : <input (change)="filterdata()" type="date" id="enddate" value="" [min]="mindate" [max]="maxdate"
             #enddate></div>
 </div>
 <!-- 

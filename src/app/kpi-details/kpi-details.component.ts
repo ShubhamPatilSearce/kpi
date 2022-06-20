@@ -35,8 +35,12 @@ export class KpiDetailsComponent implements OnInit {
 
   chart_type = '';
 
-   oDatesArr :any=[];oKpiArr:any=[];oPlannedArr:any=[];
-   
+  oDatesArr: any = []; oKpiArr: any = []; oPlannedArr: any = [];
+  updatedDatesArr: any = []; updatedKpiArr: any = []; updatedPlannedArr: any = [];
+  updated_BpKpiArr: any = []; updated_BpPlannedArr: any = [];
+  updated_BpKpiOutlierArr: any = []; updated_BpPlannedOutlierArr: any = [];
+
+
   boxplotdata:any;
   frequencydate:any='';
   area:any='MD';
@@ -46,6 +50,8 @@ export class KpiDetailsComponent implements OnInit {
   myBoxChart: any;
   outliers:any = [];
   bptooltip:any;
+  maxdate:any;
+  mindate:any;
   //dates=['2021-08-25','2021-08-26','2021-08-27','2021-08-28','2021-08-29','2021-08-30','2021-08-31'];
   datapoints = [
     "65.0",
@@ -1267,6 +1273,7 @@ export class KpiDetailsComponent implements OnInit {
   }
 
   plotChart(chart_type:string){
+    this.chart_type = chart_type;
 
     var gradientFill = this.ctx.createLinearGradient(500, 200, 0, 0);
 		gradientFill.addColorStop(0, "rgba(66, 129, 245, 0)");
@@ -1276,7 +1283,7 @@ export class KpiDetailsComponent implements OnInit {
     {
       this.pdata = [
         { label:'Actual Value',
-          data: this.oKpiArr.map(Number),
+          data: this.updatedKpiArr.map(Number),
           backgroundColor: chart_type == 'line'?gradientFill : 'rgba(196, 210, 255, 0.6)',
           borderColor: 'rgb(66, 129, 245)',
           borderWidth: 2,
@@ -1284,7 +1291,7 @@ export class KpiDetailsComponent implements OnInit {
         },{
           label:'Planned Value',
           type: chart_type,
-          data: this.oPlannedArr.map(Number),
+          data: this.updatedPlannedArr.map(Number),
           borderColor:'#cf1515',
           backgroundColor: 'rgba(245, 66, 66, 0.2)',
           borderWidth:2,
@@ -1296,7 +1303,7 @@ export class KpiDetailsComponent implements OnInit {
       this.pdata = [
         { 
           label:'Actual Value',
-          data: this.oKpiArr.map(Number).reverse(),
+          data: this.updatedKpiArr.map(Number).reverse(),
           backgroundColor: chart_type == 'line'?gradientFill : 'rgba(196, 210, 255, 0.3)',
           borderColor: 'rgb(66, 129, 245)',
           borderWidth: 2,
@@ -1311,7 +1318,7 @@ export class KpiDetailsComponent implements OnInit {
     this.mixedChart = new Chart(this.ctx,{
       type: chart_type,
       data: {
-        labels:this.returnParsedDate(this.oDatesArr, 'Monthly'),
+        labels:this.returnParsedDate(this.updatedDatesArr, 'Monthly'),
           datasets: this.pdata,},
           options: {
             legend:{
@@ -1350,6 +1357,11 @@ export class KpiDetailsComponent implements OnInit {
   }
 
   orderData(){
+
+    const currdate = moment(Date.now()).format("YYYY-MM-DD");
+
+    this.mindate = moment(this.dateArray[this.dateArray.length-1]).format("YYYY-MM-DD");
+    this.maxdate =  moment(this.dateArray[0]).format("YYYY-MM-DD");
     let uoKpiArr:any = [];
     for(let i=0;i<this.dateArray.length;i++){
       uoKpiArr.push({date:this.dateArray[i],kpiValue:this.datapoints[i]});
@@ -1366,9 +1378,20 @@ export class KpiDetailsComponent implements OnInit {
 
     this.uoMergedArr.sort((a:any, b:any) => a.date.localeCompare(b.date));
 
+    if(true){
+      while(this.uoMergedArr[this.uoMergedArr.length-1].kpiValue == undefined)
+      {
+        this.uoMergedArr.pop()
+      }
+    }
+
     this.oDatesArr = this.uoMergedArr.map((a:any) => a.date);
     this.oKpiArr = this.uoMergedArr.map((a:any) => a.kpiValue == undefined ? '0' : a.kpiValue );
     this.oPlannedArr = this.uoMergedArr.map((a:any) => a.plannedValue == undefined ? '0' : a.plannedValue );
+
+    this.updatedDatesArr =this.oDatesArr; 
+    this.updatedKpiArr=this.oKpiArr; 
+    this.updatedPlannedArr=this.oPlannedArr;
 
     
     const startdate = document.getElementById('startdate') as HTMLInputElement;
@@ -1379,9 +1402,16 @@ export class KpiDetailsComponent implements OnInit {
     this.frequencydate=moment(this.uoMergedArr[0].date).format("LLL");
     let end = moment(this.uoMergedArr[this.uoMergedArr.length - 1].date).format("YYYY-MM-DD");
 
+    if(Date.parse(end) >= Date.parse(currdate)){
+      if(true){
+        end = moment(Date.now()-(24*60*60*1000)).format("YYYY-MM-DD");
+        this.frequencydate=moment(this.dateArray[0]).format("LLL");
+        
+      }
+    }
+
     startdate.value = start === null ? '' : start;
     enddate.value = end === null ? '' : end;
-
   }
 
   precision(){
@@ -1403,6 +1433,29 @@ export class KpiDetailsComponent implements OnInit {
   
   boxplot(){
 
+    const dates2 = this.timestampToDate(this.dateArray);
+
+    const startdate = document.getElementById('startdate') as HTMLInputElement;
+    const enddate = document.getElementById('enddate') as HTMLInputElement;
+
+    let newKpidatapoints = [];
+    let newPlanneddatapoints = [];
+
+    for (let i = 0; i < dates2.length; i++) {
+      if (dates2[i] >= startdate.value && dates2[i] <= enddate.value) {
+        newKpidatapoints.push(this.datapoints[i]);
+      }
+    }
+
+    if (this.plannedValueExist()) {
+      const dates3 = this.timestampToDate(this.pdateArray);
+      for (let i = 0; i < dates3.length; i++) {
+        if (dates3[i] >= startdate.value && dates3[i] <= enddate.value) {    
+          newPlanneddatapoints.push(this.pdatapoints[i]);
+        }
+      }     
+    }
+
    this.chart_type="boxplot";
    if(this.boxKpiChart != undefined){
     this.boxKpiChart.destroy()
@@ -1416,9 +1469,12 @@ export class KpiDetailsComponent implements OnInit {
    let canvas3 = this.mychart3.nativeElement;
    let ctx3 = canvas3.getContext('2d');
 
+   let bpdata = this.generateBPdata(newKpidatapoints.map(Number));
+  
+
     if (this.plannedValueExist()) {
-      let kpidata = this.generateBPdata(this.datapoints.map(Number));
-      let planneddata = this.generateBPdata(this.pdatapoints.map(Number));
+
+      let bpdatap = this.generateBPdata(newPlanneddatapoints.map(Number));
 
       this.pdata_bp1 = [{
         label: 'Actual Value',
@@ -1426,14 +1482,14 @@ export class KpiDetailsComponent implements OnInit {
         borderColor: 'rgb(66, 129, 245)',
         borderWidth: 1,
         data: [
-          kpidata
+          bpdata,
         ],
       },
       {
         type: 'bubble',
         label: 'Outliers',
         borderColor: '#9ca1f0',
-        data: this.generateBPoutliers(this.datapoints.map(Number), kpidata[0], kpidata[5], 'KPI')
+        data: this.generateBPoutliers(newKpidatapoints.map(Number),bpdata[0],bpdata[5],'KPI')
       }]
 
       this.pdata_bp2=[{
@@ -1442,19 +1498,17 @@ export class KpiDetailsComponent implements OnInit {
         borderColor: '#cf1515',
         borderWidth: 1,
         data: [
-           planneddata
+           bpdatap
         ],
       },
       {
         type: 'bubble',
         label: 'Outliers',
         borderColor: '#cf1515',
-        data: this.generateBPoutliers(this.pdatapoints.map(Number), planneddata[0], planneddata[5], 'Planned')
+        data: this.generateBPoutliers(newPlanneddatapoints.map(Number),bpdatap[0],bpdatap[5],'Planned')
       }]
     }
     else{
-
-      let kpidata = this.generateBPdata(this.datapoints.map(Number));
 
       this.pdata_bp1 =[{
         label: 'Actual Value',
@@ -1462,14 +1516,14 @@ export class KpiDetailsComponent implements OnInit {
         borderColor: 'rgb(66, 129, 245)',
         borderWidth: 1,
         data: [
-          kpidata
+          bpdata
         ],
       },
       {
         type: 'bubble',
         label: 'Outliers',
         borderColor: '#9ca1f0',
-        data: this.generateBPoutliers(this.datapoints.map(Number), kpidata[0], kpidata[5], 'KPI')
+        data:  this.generateBPoutliers(newKpidatapoints.map(Number),bpdata[0],bpdata[5],'KPI')
       }]
 
     } 
@@ -1737,7 +1791,9 @@ export class KpiDetailsComponent implements OnInit {
 
     arr = arr.sort()
 
+    ;
     let median = this.median(arr);
+    
 
 
     let firsthalf = [];
@@ -1758,8 +1814,11 @@ export class KpiDetailsComponent implements OnInit {
 
     let max = arr[arr.length - 1];
 
-    let q1 = this.median(firsthalf);
-    let q3 = this.median(secondhalf);
+    
+    let q1 = firsthalf.length > 0 ? this.median(firsthalf) : median;
+    
+    let q3 = secondhalf.length > 0 ? this.median(secondhalf) : median;
+    
 
     let iqr = q3 - q1;
     let lowerf = q1 - (1.5 * iqr);
@@ -1835,7 +1894,7 @@ export class KpiDetailsComponent implements OnInit {
   freqdate(frequencydate:string, frequency: string){
     const options: any = {};
 
-    if( frequency == 'Hourly'){
+    if( frequency == 'Hourly'||frequency == 'Daily'){
       return frequencydate
     }
     else{
@@ -1891,86 +1950,167 @@ export class KpiDetailsComponent implements OnInit {
     return true;
   }
 
-  boxplotfilter(){
-    const dates2 = this.timestampToDate(this.dateArray);
+  // boxplotfilter(){
+  //   const dates2 = this.timestampToDate(this.dateArray);
+
+  //   const startdate = document.getElementById('startdate') as HTMLInputElement;
+  //   const enddate = document.getElementById('enddate') as HTMLInputElement;
+
+  //   let newKpidatapoints = [];
+  //   let newPlanneddatapoints = [];
+
+  //   for (let i = 0; i < dates2.length; i++) {
+  //     if (dates2[i] >= startdate.value && dates2[i] <= enddate.value) {
+  //       newKpidatapoints.push(this.datapoints[i]);
+  //     }
+  //   }
+
+  //   if (this.plannedValueExist()) {
+  //     const dates3 = this.timestampToDate(this.pdateArray);
+  //     for (let i = 0; i < dates3.length; i++) {
+  //       if (dates3[i] >= startdate.value && dates3[i] <= enddate.value) {    
+  //         newPlanneddatapoints.push(this.pdatapoints[i]);
+  //       }
+  //     }     
+  //   }
+
+
+  //     let bpdata = this.generateBPdata(newKpidatapoints.map(Number));
+  //     this.boxKpiChart.data.datasets[0].data = [bpdata];
+  //     this.boxKpiChart.data.datasets[1].data = this.generateBPoutliers(newKpidatapoints.map(Number),bpdata[0],bpdata[5],'KPI'); // outliers updated data
+  //     this.boxKpiChart.update();
+      
+  //     if (this.plannedValueExist()) {
+  //       let bpdatap = this.generateBPdata(newPlanneddatapoints.map(Number));
+
+  //       this.boxPlannedChart.data.datasets[0].data = [bpdatap];
+  //       this.boxPlannedChart.data.datasets[1].data =  this.generateBPoutliers(newPlanneddatapoints.map(Number),bpdatap[0],bpdatap[5],'Planned');  //outliers for planned (updated)
+  //       this.boxPlannedChart.update();
+  //     }
+    
+
+  // }
+
+  // linebarfilter(){
+  //   const currdate = moment(Date.now()).format("YYYY-MM-DD");
+  //   const dates2 = this.timestampToDate(this.oDatesArr);
+
+  //   const startdate = document.getElementById('startdate') as HTMLInputElement;
+  //   const enddate = document.getElementById('enddate') as HTMLInputElement;
+
+  //   if(Date.parse(enddate.value) >= Date.parse(currdate)){
+  //     if(true){
+  //       enddate.value = moment(Date.now()-(24*60*60*1000)).format("YYYY-MM-DD");
+        
+  //     }
+  //   }
+  //   let newdates = [];
+  //   let newKpidatapoints = [];
+  //   let newPlanneddatapoints = [];
+
+  //   for (let i = 0; i < dates2.length; i++) {
+  //     if (dates2[i] >= startdate.value && dates2[i] <= enddate.value) {
+  //       newdates.push(dates2[i]);
+  //       newKpidatapoints.push(this.oKpiArr[i]);
+  //       if (this.plannedValueExist()) {
+  //         newPlanneddatapoints.push(this.oPlannedArr[i]);
+  //       }
+  //     }
+  //   }
+
+  //   this.updatedDatesArr =newdates; 
+  //   this.updatedKpiArr=newKpidatapoints; 
+  //   this.updatedPlannedArr=newPlanneddatapoints;
+
+  //   this.mixedChart.data.labels = this.returnParsedDate( this.updatedDatesArr, this.frequency);
+  //   this.mixedChart.data.datasets[0].data = this.updatedKpiArr;
+
+  //   if (this.plannedValueExist()) {
+  //     this.mixedChart.data.datasets[1].data = this.updatedPlannedArr;
+  //   }
+
+  //   this.mixedChart.update();
+
+  // }
+
+  filterdata() {
+    const BP_datesArray = this.timestampToDate(this.dateArray);
+    const LB_datesArray = this.timestampToDate(this.oDatesArr);
 
     const startdate = document.getElementById('startdate') as HTMLInputElement;
     const enddate = document.getElementById('enddate') as HTMLInputElement;
 
-    let newKpidatapoints = [];
-    let newPlanneddatapoints = [];
+    
+    let LB_newdates = [];
+    let LB_newKpidatapoints = [];
+    let LB_newPlanneddatapoints = [];
+    let BP_newKpidatapoints:any[] = [];
+    let BP_newPlanneddatapoints = [];
 
-    for (let i = 0; i < dates2.length; i++) {
-      if (dates2[i] >= startdate.value && dates2[i] <= enddate.value) {
-        newKpidatapoints.push(this.datapoints[i]);
+    // Line Bar
+    for (let i = 0; i < LB_datesArray.length; i++) {
+      if (LB_datesArray[i] >= startdate.value && LB_datesArray[i] <= enddate.value) {
+        LB_newdates.push(LB_datesArray[i]);
+        LB_newKpidatapoints.push(this.oKpiArr[i]);
+        if (this.plannedValueExist()) {
+          LB_newPlanneddatapoints.push(this.oPlannedArr[i]);
+        }
       }
     }
 
+    // Boxplot
+    for (let i = 0; i < BP_datesArray.length; i++) {
+      if (BP_datesArray[i] >= startdate.value && BP_datesArray[i] <= enddate.value) {
+        BP_newKpidatapoints.push(this.datapoints[i]);
+      }
+    }
     if (this.plannedValueExist()) {
       const dates3 = this.timestampToDate(this.pdateArray);
       for (let i = 0; i < dates3.length; i++) {
         if (dates3[i] >= startdate.value && dates3[i] <= enddate.value) {    
-          newPlanneddatapoints.push(this.pdatapoints[i]);
+          BP_newPlanneddatapoints.push(this.pdatapoints[i]);
         }
       }     
     }
 
+    // Line Bar
+    this.updatedDatesArr =LB_newdates; 
+    this.updatedKpiArr=LB_newKpidatapoints; 
+    this.updatedPlannedArr=LB_newPlanneddatapoints;
 
-      let bpdata = this.generateBPdata(newKpidatapoints.map(Number));
-      this.boxKpiChart.data.datasets[0].data = [bpdata];
-      this.boxKpiChart.data.datasets[1].data = this.generateBPoutliers(newKpidatapoints.map(Number),bpdata[0],bpdata[5],'KPI'); // outliers updated data
+    //Boxplot
+    let bpdata = this.generateBPdata(BP_newKpidatapoints.map(Number));
+    this.updated_BpKpiArr = bpdata;
+    this.updated_BpKpiOutlierArr = this.generateBPoutliers(BP_newKpidatapoints.map(Number),bpdata[0],bpdata[5],'KPI');
+    if (this.plannedValueExist()) {
+      debugger
+      let bpdatap = this.generateBPdata(BP_newPlanneddatapoints.map(Number));
+      debugger
+      this.updated_BpPlannedArr = bpdatap;
+      this.updated_BpPlannedOutlierArr = this.generateBPoutliers(BP_newPlanneddatapoints.map(Number),bpdatap[0],bpdatap[5],'Planned');
+    }
+
+    if (this.chart_type == "boxplot") {
+      this.boxKpiChart.data.datasets[0].data = [this.updated_BpKpiArr];
+      this.boxKpiChart.data.datasets[1].data = this.updated_BpKpiOutlierArr;
       this.boxKpiChart.update();
-      
       if (this.plannedValueExist()) {
-        let bpdatap = this.generateBPdata(newPlanneddatapoints.map(Number));
-
-        this.boxPlannedChart.data.datasets[0].data = [bpdatap];
-        this.boxPlannedChart.data.datasets[1].data =  this.generateBPoutliers(newPlanneddatapoints.map(Number),bpdatap[0],bpdatap[5],'Planned');  //outliers for planned (updated)
+        this.boxPlannedChart.data.datasets[0].data = [this.updated_BpPlannedArr];
+        this.boxPlannedChart.data.datasets[1].data =  this.updated_BpPlannedOutlierArr;
         this.boxPlannedChart.update();
       }
-    
-
-  }
-
-  linebarfilter(){
-    
-    const dates2 = this.timestampToDate(this.oDatesArr);
-
-    const startdate = document.getElementById('startdate') as HTMLInputElement;
-    const enddate = document.getElementById('enddate') as HTMLInputElement;
-
-    let newdates = [];
-    let newKpidatapoints = [];
-    let newPlanneddatapoints = [];
-
-    for (let i = 0; i < dates2.length; i++) {
-      if (dates2[i] >= startdate.value && dates2[i] <= enddate.value) {
-        newdates.push(dates2[i]);
-        newKpidatapoints.push(this.oKpiArr[i]);
-        if (this.plannedValueExist()) {
-          newPlanneddatapoints.push(this.oPlannedArr[i]);
-        }
+    }
+    else {
+      this.mixedChart.data.labels = this.returnParsedDate( this.updatedDatesArr, this.frequency);
+      this.mixedChart.data.datasets[0].data = this.updatedKpiArr;
+  
+      if (this.plannedValueExist()) {
+        this.mixedChart.data.datasets[1].data = this.updatedPlannedArr;
       }
+  
+      this.mixedChart.update();
     }
-
-    this.mixedChart.data.labels = this.returnParsedDate(newdates, this.frequency);
-    this.mixedChart.data.datasets[0].data = newKpidatapoints;
-
-    if (this.plannedValueExist()) {
-      this.mixedChart.data.datasets[1].data = newPlanneddatapoints;
-    }
-
-    this.mixedChart.update();
-
-  }
-
-  filterdata() {
-    if(this.chart_type == 'boxplot'){
-      this.boxplotfilter();
-    }
-    else{
-      this.linebarfilter();
-    }
+    
   }
 
 }
