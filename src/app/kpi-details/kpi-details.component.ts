@@ -19,7 +19,14 @@ export class KpiDetailsComponent implements OnInit {
 
   constructor() {
   }
+ 
+  onSave(){
+    window.open("https://search.tatasteel.com/#/search/app%20sales/All")
+    window.onload= (event) => {
+      window.open("https://search.tatasteel.com/#/search/app%20sales/All")
+    };
 
+  }
 
   ngOnInit(): void {}
 
@@ -40,10 +47,11 @@ export class KpiDetailsComponent implements OnInit {
   updated_BpKpiArr: any = []; updated_BpPlannedArr: any = [];
   updated_BpKpiOutlierArr: any = []; updated_BpPlannedOutlierArr: any = [];
 
-
+  
   boxplotdata:any;
   frequencydate:any='';
-  area:any='MD';
+  area:any='M&S';
+  KpiName:any='Aashiyana Sales';
   mixedChart: any;
   boxKpiChart: any;
   boxPlannedChart: any;
@@ -54,7 +62,7 @@ export class KpiDetailsComponent implements OnInit {
   mindate:any;
   //dates=['2021-08-25','2021-08-26','2021-08-27','2021-08-28','2021-08-29','2021-08-30','2021-08-31'];
   datapoints = [
-    "65.0",
+    "659523923.21348",
     "67.0",
     "66.0",
     "65.0",
@@ -1412,6 +1420,23 @@ export class KpiDetailsComponent implements OnInit {
 
     startdate.value = start === null ? '' : start;
     enddate.value = end === null ? '' : end;
+  }
+
+  roundoff() {
+    let rof_data = parseInt(this.datapoints[0])
+
+    if (rof_data.toString().length < 6) {
+      return 'Rs. '+ rof_data;
+    }
+    else if (rof_data.toString().length < 8) {
+      rof_data = rof_data / 100000
+      return 'Rs. '+ rof_data.toFixed(2).toString() + ' L ';
+    }
+    else {
+      rof_data = rof_data / 10000000
+      return 'Rs. '+ rof_data.toFixed(2).toString() + ' Cr' 
+    }
+
   }
 
   precision(){

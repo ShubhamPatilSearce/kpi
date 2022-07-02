@@ -1,5 +1,6 @@
 <div class="container" style="width: 730px; border: 2 px; border-color:#A1A2A5;">
 <div class="grid-container-1">
+    <button (click)="onSave()">Save</button>
     <div class="grid-item department"> Sustainability > SHS</div>
     <div class="grid-item name">CO2 Emission intensity</div>
     <div class="grid-item location">Jamshedpur</div>
@@ -7,7 +8,9 @@
     <div class="grid-item plan">Plan:</div>
     <div *ngIf="this.area == 'MD';  else deviation" class="grid-item deviation ">Compliance:</div>
     <ng-template #deviation><div class="grid-item deviation " >Deviation:</div></ng-template>
-    <div class="grid-item actual-value">{{this.precision()}} tCO2/tcs</div>
+    <div *ngIf="this.KpiName == 'Aashiyana Sales'; else normal " class="grid-item actual-value">{{this.roundoff()}} tCO2/tcs</div>
+    <ng-template #normal><div class="grid-item actual-value">{{this.roundoff()}} tCO2/tcs</div></ng-template>
+    <div> {{this.roundoff()}}</div>
     <div class="grid-item plan-value">58,588.32 tCO2/tcs</div>
     <div *ngIf="this.area == 'MD';  else deviationvalue" class="grid-item deviation-value tooltip1"><span class="span-space1">-13.05%</span>
         <span class="tooltiptext1">
